@@ -5,6 +5,7 @@ from web3 import Web3
 from eth_account.messages import encode_defunct
 import requests
 import json
+import csv
 from loguru import logger
 
 current_datetime = datetime.now()
@@ -15,7 +16,7 @@ rpc_links = {
     'zkfair': 'https://rpc.zkfair.io',
 }
 
-with open("addresses.txt", "r") as f:
+with open("private_keys.txt", "r") as f:
     for row in f:
         private_key = row.strip()
         if private_key:
@@ -26,7 +27,7 @@ with open("proxies.txt", "r") as proxy_file:
 
 
 def del_key(wallet):
-    file_path = f"addresses.txt"
+    file_path = f"private_keys.txt"
 
     lines = []
     with open(file_path, "r", encoding = 'utf-8') as f:
@@ -87,14 +88,23 @@ for private_key in keys_list:
 
         if not account_profit:
             print(f"{wallet} = no drop")
+            profit_decimal = 0 # Задаем значение профита как 0, если его нет
 
         else:
             account_profit_decimal = int(account_profit) / 10 ** 18
             print(f"{wallet} = {account_profit_decimal}")
-            with open('stats.txt', 'a') as output:
-                print(f"{wallet} = {account_profit_decimal}", file = output)
+            profit_decimal = account_profit_decimal
+
+            with open('profit_data.csv', mode='a', newline='', encoding='utf-8') as file:
+                writer = csv.writer(file)
+                writer.writerow([wallet, profit_decimal])
+
         del_key(private_key)
         time.sleep(1)
+
+    except Exception as error:
+        logger.error(f'False: {error}')
+        continue
 
     except Exception as error:
         logger.error(f'False: {error}')
